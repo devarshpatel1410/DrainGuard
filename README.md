@@ -1,5 +1,4 @@
-[DrainGuard_AI_After_Submit copy.html](https://github.com/user-attachments/files/32093120/DrainGuard_AI_After_Submit.copy.html)
-<!doctype html>
+
 <html lang="en">
 <head>
   <meta charset="utf-8">

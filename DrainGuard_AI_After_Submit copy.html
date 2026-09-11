@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DrainGuard | Smart Drain & Sanitation</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Small additions for remove-photo button + live AI scan status (style.css is external, so kept safe here) */
+    .btn.danger {
+      background: #ffe6e6;
+      color: #c0392b;
+      border: 1px solid #f1b0b0;
+    }
+    .btn.danger:hover { background: #ffd0d0; }
+    .ai-scan-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      margin-top: 4px;
+    }
+    .ai-scan-status.scanning { color: #b8860b; }
+    .ai-scan-status.detected { color: #1e7e34; font-weight: 600; }
+    .spinner-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor;
+      animation: pulseDot 0.9s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.25; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+  </style>
+</head>
+
+<body>
+<header class="nav">
+  <div class="brand">💧 Drain<span>Guard</span></div>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#problem">Problem</a>
+    <a href="#solution">Solution</a>
+    <a href="#report">Report Issue</a>
+    <a href="#dashboard">Dashboard</a>
+  </nav>
+</header>
+
+<main>
+  <section id="home" class="hero">
+    <div>
+      <p class="eyebrow">SIH 26195 • CLEAN & GREEN TECHNOLOGY</p>
+      <h1>Cleaner drains.<br><span>Smarter cities.</span></h1>
+      <p class="lead">A connected platform for drain inspection, citizen reporting, alerts and safer sanitation workflows.</p>
+      <a class="btn primary" href="#report">Report a Drain Problem</a>
+    </div>
+
+    <div class="robot-card">
+      <div class="robot">🤖</div>
+      <h3>Robot-assisted inspection</h3>
+      <p>Camera + sensors + dashboard for safer visual inspection.</p>
+    </div>
+  </section>
+
+  <section id="problem" class="section">
+    <p class="eyebrow">THE PROBLEM</p>
+    <h2>Drain issues need faster visibility.</h2>
+
+    <div class="cards">
+      <article>
+        <b>🌧️</b>
+        <h3>Urban flooding</h3>
+        <p>Blocked drains can contribute to waterlogging and delayed response.</p>
+      </article>
+      <article>
+        <b>🦠</b>
+        <h3>Health risks</h3>
+        <p>Waste and stagnant water can create sanitation concerns.</p>
+      </article>
+      <article>
+        <b>🛡️</b>
+        <h3>Unsafe inspection</h3>
+        <p>Remote visual checks can reduce unnecessary exposure during inspection.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="solution" class="section">
+    <p class="eyebrow">OUR SOLUTION</p>
+    <h2>One digital control layer.</h2>
+
+    <div class="cards">
+      <article>
+        <h3>📷 Camera inspection</h3>
+        <p>Capture visual evidence of waste, blockage or overflow risk.</p>
+      </article>
+      <article>
+        <h3>📡 Sensor monitoring</h3>
+        <p>Use water-level and flow/level trends as proposed inputs.</p>
+      </article>
+      <article>
+        <h3>📊 Dashboard</h3>
+        <p>Track reports, priorities, asset history and intervention status.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="report" class="section report-section">
+    <p class="eyebrow">CITIZEN REPORT</p>
+    <h2>Scan. Describe. Report.</h2>
+    <p class="lead small">
+      Open your camera, capture or upload a drain photo, let AI scan the image,
+      view the detected problem and recommended solution, then create a digital issue report.
+    </p>
+
+    <div class="report-grid">
+      <!-- CAMERA / PHOTO PANEL -->
+      <div class="panel">
+        <div class="camera-preview" id="cameraPreview">
+          <div id="placeholder" class="placeholder">
+            <div>📷</div>
+            <strong>Camera inspection</strong>
+            <span>Take a photo or upload one.</span>
+          </div>
+
+          <video id="cameraVideo" autoplay playsinline hidden></video>
+          <canvas id="cameraCanvas" hidden></canvas>
+          <img id="photoPreview" alt="Drain issue" hidden>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="openCamera" type="button">Open Camera</button>
+          <button class="btn secondary" id="capture" type="button" disabled>Capture Photo</button>
+          <label class="btn secondary" for="photoInput">Upload Photo</label>
+          <input id="photoInput" type="file" accept="image/*" hidden>
+          <button class="btn danger" id="removePhoto" type="button" hidden>🗑️ Remove Photo</button>
+        </div>
+
+        <p id="cameraStatus" class="status">Camera ready.</p>
+
+        <!-- Live AI scan feedback appears right after a photo is captured/uploaded -->
+        <p id="aiScanStatus" class="ai-scan-status" hidden></p>
+
+        <p class="status">📷 Upload/capture the photo — AI will scan it automatically. Fill in the report and submit; full AI analysis appears after the report is created.</p>
+      </div>
+
+      <!-- REPORT FORM -->
+      <form class="panel form" id="reportForm">
+        <label>
+          Your Name
+          <input id="name" required placeholder="Enter your name">
+        </label>
+
+        <label>
+          Problem Type
+          <select id="problemType" required>
+            <option value="">Select problem</option>
+            <option>Drain blockage</option>
+            <option>Waste accumulation</option>
+            <option>Overflow / waterlogging</option>
+            <option>Damaged drain</option>
+            <option>Other sanitation issue</option>
+          </select>
+        </label>
+
+        <label>
+          Problem Description
+          <textarea id="description" required placeholder="Describe what you found..."></textarea>
+        </label>
+
+        <div class="loc-row">
+          <label>
+            Location
+            <input id="location" required placeholder="Area / landmark / address">
+          </label>
+          <button type="button" class="location-btn" id="gps">📍 Use My Location</button>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">Submit Report</button>
+          <button class="btn secondary" type="button" id="clear">Clear</button>
+        </div>
+
+        <p id="message" class="status"></p>
+      </form>
+    </div>
+
+    <!-- REPORT CREATED -->
+    <div class="record" id="record" hidden>
+      <div>
+        <span class="badge">REPORT CREATED</span>
+        <h3 id="recordTitle"></h3>
+        <p id="recordSummary"></p>
+      </div>
+      <div>
+        <small>Issue ID</small>
+        <strong id="issueId"></strong>
+      </div>
+    <!-- AI ANALYSIS AFTER REPORT SUBMISSION -->
+    <div class="panel ai-result" id="aiResult" hidden style="margin-top:24px;">
+      <div class="ai-result-header">
+        <span class="badge">AI ANALYSIS COMPLETE</span>
+        <span id="scanIcon">🤖</span>
+      </div>
+
+      <h3>🤖 AI Scan & Recommended Solution</h3>
+      <p class="lead small">AI has analyzed the submitted drain photo and provides the following recommendation.</p>
+
+      <div class="ai-result-row">
+        <strong>🔍 Problem Detected:</strong>
+        <span id="detectedProblem">-</span>
+      </div>
+
+      <div class="ai-result-row">
+        <strong>⚠️ Severity:</strong>
+        <span id="severity">-</span>
+      </div>
+
+      <div class="ai-confidence">
+        <strong>AI Confidence:</strong>
+        <span id="confidence">-</span>
+      </div>
+
+      <div class="ai-solution">
+        <h4>💡 Recommended Solution</h4>
+        <p id="recommendedSolution"></p>
+      </div>
+
+      <p class="ai-note">
+        Demo AI analysis: this section runs a simple on-device image scan (color/brightness pattern of your photo). In a production version, this can be connected to a full computer-vision AI model.
+      </p>
+    </div>
+
+    </div>
+  </section>
+
+  <section id="dashboard" class="section">
+    <p class="eyebrow">DEMO DASHBOARD</p>
+    <h2>Live monitoring concept</h2>
+
+    <div class="dashboard">
+      <div><small>Robot status</small><strong id="robotStatus">Ready</strong></div>
+      <div><small>Drain condition</small><strong id="drainStatus">Normal</strong></div>
+      <div><small>Waste level</small><strong id="waste">42%</strong></div>
+      <div><small>Battery</small><strong id="battery">86%</strong></div>
+    </div>
+
+    <button class="btn primary" id="demoScan" type="button">Start Demo Scan</button>
+    <button class="btn secondary" id="alert" type="button">Simulate Alert</button>
+  </section>
+</main>
+
+<footer>
+  DrainGuard • Smart Waste, Drain & Sanitation Management System • SIH 26195
+</footer>
+
+<!-- Existing JavaScript -->
+<script src="script.js"></script>
+
+<!-- AI ANALYSIS JAVASCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const reportForm = document.getElementById("reportForm");
+  const aiResult = document.getElementById("aiResult");
+  const detectedProblem = document.getElementById("detectedProblem");
+  const severity = document.getElementById("severity");
+  const confidence = document.getElementById("confidence");
+  const recommendedSolution = document.getElementById("recommendedSolution");
+
+  const problemType = document.getElementById("problemType");
+  const description = document.getElementById("description");
+  const record = document.getElementById("record");
+
+  const placeholder = document.getElementById("placeholder");
+  const photoPreview = document.getElementById("photoPreview");
+  const cameraCanvas = document.getElementById("cameraCanvas");
+  const cameraVideo = document.getElementById("cameraVideo");
+  const photoInput = document.getElementById("photoInput");
+  const removePhotoBtn = document.getElementById("removePhoto");
+  const cameraStatus = document.getElementById("cameraStatus");
+  const aiScanStatus = document.getElementById("aiScanStatus");
+
+  const aiSolutions = {
+    "Drain blockage": {
+      severity: "High ⚠️",
+      solution: "Remove accumulated waste and blockage, clean the affected drain section, and inspect water flow. If the blockage is severe, assign a maintenance team for further inspection."
+    },
+    "Waste accumulation": {
+      severity: "Medium 🟠",
+      solution: "Remove the accumulated waste safely, clean the surrounding area, and schedule regular waste collection to prevent future blockage."
+    },
+    "Overflow / waterlogging": {
+      severity: "High ⚠️",
+      solution: "Inspect the drainage path immediately, clear any obstruction, and monitor water levels. Prioritize maintenance if flooding or overflow continues."
+    },
+    "Damaged drain": {
+      severity: "Medium 🟠",
+      solution: "Inspect the damaged structure, secure the affected area if required, and arrange repair or replacement of the damaged drain section."
+    },
+    "Other sanitation issue": {
+      severity: "Medium 🟠",
+      solution: "Inspect the sanitation issue, identify the source of the problem, clean the affected area, and assign the appropriate maintenance team."
+    }
+  };
+
+  // ---- Live image scan state ----
+  let aiDetectedType = null;      // problem type suggested by scanning the actual photo
+  let aiDetectedConfidence = null; // e.g. "87%"
+  let userOverrode = false;        // true once the user manually changes the dropdown themselves
+  let suppressChangeEvent = false; // used while we set the dropdown value programmatically
+
+  /**
+   * Very lightweight "AI" image scan: reads the pixels of the photo the user
+   * captured/uploaded and guesses a problem category from its color/brightness
+   * pattern (dark & brownish -> blockage, greenish -> waste, blue & bright ->
+   * overflow/waterlogging, grey/uniform -> damaged drain, else -> other).
+   * This is a genuine (if simple) analysis of the actual pixels of the photo,
+   * not a random guess.
+   */
+  function analyzePhoto(imgEl) {
+    try {
+      const w = 64, h = 64; // downscale for speed
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+
+      let r = 0, g = 0, b = 0, n = 0;
+      let variance = 0;
+      const brightnesses = [];
+
+      for (let i = 0; i < data.length; i += 4) {
+        r += data[i];
+        g += data[i + 1];
+        b += data[i + 2];
+        brightnesses.push((data[i] + data[i + 1] + data[i + 2]) / 3);
+        n++;
+      }
+      r /= n; g /= n; b /= n;
+      const brightness = (r + g + b) / 3;
+
+      const mean = brightness;
+      for (const v of brightnesses) variance += (v - mean) * (v - mean);
+      variance /= brightnesses.length;
+      const stdDev = Math.sqrt(variance);
+
+      let type, baseConfidence;
+
+      if (b > r && b > g && brightness > 95) {
+        type = "Overflow / waterlogging";
+        baseConfidence = 88;
+      } else if (r > g && r > b && brightness < 95) {
+        type = "Drain blockage";
+        baseConfidence = 85;
+      } else if (g >= r && g >= b) {
+        type = "Waste accumulation";
+        baseConfidence = 83;
+      } else if (stdDev < 18 && brightness > 120) {
+        type = "Damaged drain";
+        baseConfidence = 80;
+      } else {
+        type = "Other sanitation issue";
+        baseConfidence = 76;
+      }
+
+      // Nudge confidence slightly using how "distinct" the color signal is,
+      // so it isn't a fixed number every time, but stays deterministic per photo.
+      const spread = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+      const confidencePct = Math.min(97, Math.round(baseConfidence + spread / 12));
+
+      return { type, confidence: confidencePct + "%" };
+    } catch (err) {
+      // e.g. tainted canvas from a cross-origin source — fail gracefully
+      return null;
+    }
+  }
+
+  function runScanOnCurrentPhoto() {
+    if (!photoPreview.src || photoPreview.hidden) return;
+
+    aiScanStatus.hidden = false;
+    aiScanStatus.className = "ai-scan-status scanning";
+    aiScanStatus.innerHTML = '<span class="spinner-dot"></span> AI is scanning the photo…';
+
+    const doScan = () => {
+      const result = analyzePhoto(photoPreview);
+      if (!result) {
+        aiScanStatus.className = "ai-scan-status";
+        aiScanStatus.textContent = "Could not scan this photo automatically — please select the problem type manually.";
+        return;
+      }
+
+      aiDetectedType = result.type;
+      aiDetectedConfidence = result.confidence;
+      userOverrode = false;
+
+      suppressChangeEvent = true;
+      problemType.value = aiDetectedType;
+      suppressChangeEvent = false;
+
+      aiScanStatus.className = "ai-scan-status detected";
+      aiScanStatus.textContent = "🤖 AI detected: " + aiDetectedType + " (" + aiDetectedConfidence + " match) — you can change this if it looks wrong.";
+    };
+
+    // small delay so the "scanning" state is visible, feels like a real scan
+    setTimeout(doScan, 800);
+  }
+
+  // Whenever the photo element actually gets a new image (from camera capture
+  // or file upload — both handled by script.js), scan it automatically.
+  const photoObserver = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.attributeName === "src" || m.attributeName === "hidden") {
+        if (!photoPreview.hidden && photoPreview.src) {
+          removePhotoBtn.hidden = false;
+          runScanOnCurrentPhoto();
+        }
+      }
+    }
+  });
+  photoObserver.observe(photoPreview, { attributes: true });
+
+  // ---- Remove Photo option ----
+  removePhotoBtn.addEventListener("click", () => {
+    photoPreview.src = "";
+    photoPreview.hidden = true;
+    cameraCanvas.hidden = true;
+    if (!cameraVideo.hidden) {
+      // leave the live camera view alone if it's open; only clear the taken photo
+    }
+    placeholder.hidden = false;
+    removePhotoBtn.hidden = true;
+
+    photoInput.value = ""; // allow re-uploading the same file if needed
+
+    aiScanStatus.hidden = true;
+    aiScanStatus.textContent = "";
+    aiDetectedType = null;
+    aiDetectedConfidence = null;
+    userOverrode = false;
+
+    aiResult.hidden = true;
+    cameraStatus.textContent = "Photo removed. Take a new photo or upload another one.";
+  });
+
+  // AI analysis appears only AFTER the report has been successfully submitted.
+  reportForm.addEventListener("submit", () => {
+
+    setTimeout(() => {
+      // Prefer the type actually detected from the photo, unless the user
+      // manually picked a different one themselves.
+      let selectedProblem = (aiDetectedType && !userOverrode) ? aiDetectedType : problemType.value;
+
+      if (!selectedProblem || !aiSolutions[selectedProblem]) {
+        selectedProblem = "Other sanitation issue";
+      }
+
+      const result = aiSolutions[selectedProblem];
+      const usedPhotoDetection = (selectedProblem === aiDetectedType && !userOverrode);
+
+      detectedProblem.textContent = selectedProblem + (usedPhotoDetection ? " (from photo scan)" : "");
+      severity.textContent = result.severity;
+      confidence.textContent = usedPhotoDetection ? aiDetectedConfidence : "80%";
+      recommendedSolution.textContent = result.solution;
+
+      aiResult.hidden = false;
+
+      // Show AI analysis after the report-created section.
+      aiResult.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }, 700);
+  });
+
+  // Hide old AI result when user manually changes the report's problem type.
+  problemType.addEventListener("change", () => {
+    if (!suppressChangeEvent) {
+      userOverrode = true;
+    }
+    aiResult.hidden = true;
+  });
+
+  document.getElementById("clear").addEventListener("click", () => {
+    aiResult.hidden = true;
+    removePhotoBtn.click();
+  });
+
+});
+</script>
+
+</body>
+</html>
